@@ -7,10 +7,10 @@ The goal is to use purely official tekton tasks and just configure the pipeline.
 
 The pipeline consists of these steps:
 
-1. Clone git repo
-2. Compile project
-3. Run tests
-4. Build and push image to repository
+1. Clone git repo (git-clone)
+2. Compile project (maven task)
+3. Run tests (maven)
+4. Build and push image to repository (maven task + quarkus container plugin)
 
 ## Prerequisites
 
@@ -89,6 +89,15 @@ You can also check details via:
 tkn pipelinerun describe build-pipeline-run-h7p2n
 ```
 
+## Deploy app
+
+```
+kubectl create deployment getting-started --image=example.com/test/getting-started:1.0-SNAPSHOT
+kubectl expose deployment getting-started --type=LoadBalancer --port=8080
+minikube service getting-started
+```
+try the rest endpoint:
+http://127.0.0.1:53430/hello
 
 ## Resources
 
