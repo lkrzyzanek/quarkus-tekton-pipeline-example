@@ -102,3 +102,4 @@ http://127.0.0.1:53430/hello
 ## Resources
 
 * https://redhat-developer-demos.github.io/tekton-tutorial-staging/tekton-tutorial/setup.html
+* https://quarkus.io/guides/container-image
