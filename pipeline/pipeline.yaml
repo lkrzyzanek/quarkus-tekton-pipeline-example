@@ -1,0 +1,96 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-pipeline
+spec:
+  params:
+    - name: gitUrl
+      type: string
+      description: The git repository URL to clone from.
+    - name: gitRevision
+      type: string
+      description: The git branch to clone.
+    - name: contextDir
+      description: the context directory from where to build the application
+      default: .
+    - name: imageGroup
+      description: Container image group
+    - name: imageName
+      description: Container image name
+  workspaces:
+    - name: shared-workspace
+    - name: maven-settings
+    - name: local-maven-repo
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: $(params.gitUrl)
+        - name: revision
+          value: $(params.gitRevision)
+        - name: deleteExisting
+          value: "true"
+    - name: compile
+      taskRef:
+        name: maven
+      runAfter:
+        - fetch-repository
+      params:
+        - name: CONTEXT_DIR
+          value: $(params.contextDir)
+        - name: GOALS
+          value:
+            - -Dmaven.repo.local=$(workspaces.local-maven-repo.path)
+            - clean
+            - compile
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: shared-workspace
+    - name: test
+      taskRef:
+        name: maven
+      runAfter:
+        - compile
+      params:
+        - name: CONTEXT_DIR
+          value: $(params.contextDir)
+        - name: GOALS
+          value:
+            - -Dmaven.repo.local=$(workspaces.local-maven-repo.path)
+            - test
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: shared-workspace
+    - name: build-push-image
+      taskRef:
+        name: maven
+      runAfter:
+        - test
+      params:
+        - name: CONTEXT_DIR
+          value: $(params.contextDir)
+        - name: GOALS
+          value:
+            - -DskipTests=true
+            - -Dmaven.repo.local=$(workspaces.local-maven-repo.path)
+            - -Dquarkus.container-image.insecure=true
+            - -Dquarkus.container-image.registry=example.com
+            - -Dquarkus.container-image.build=true
+            - -Dquarkus.container-image.push=true
+            - -Dquarkus.container-image.group=$(params.imageGroup)
+            - -Dquarkus.container-image.name=$(params.imageName)
+            - package
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: shared-workspace
