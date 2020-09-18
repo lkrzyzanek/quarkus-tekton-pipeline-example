@@ -64,12 +64,10 @@ via Tekton CLI:
 tkn pipeline start build-pipeline \
  --param gitUrl='https://github.com/lkrzyzanek/quarkus-tekton-pipeline-example.git' \
  --param gitRevision='master' \
- --param contextDir='.' \
  --param imageGroup='test' \
  --param imageName='getting-started' \
  --workspace name=shared-workspace,claimName=shared-workspace \
  --workspace name=maven-settings,emptyDir="" \
- --workspace name=local-maven-repo,emptyDir="" \
  --showlog
 ```
 
