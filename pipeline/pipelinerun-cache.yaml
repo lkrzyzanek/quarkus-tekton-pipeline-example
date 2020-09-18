@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: maven-repo
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: pipelinerun-withcache
+spec:
+  pipelineRef:
+    name: build-pipeline
+  params:
+    - name: gitUrl
+      value: 'https://github.com/lkrzyzanek/quarkus-tekton-pipeline-example.git'
+    - name: gitRevision
+      value: 'master'
+    - name: imageGroup
+      value: 'test'
+    - name: imageName
+      value: 'getting-started-cache'
+    - name: mavenRepoVolume
+      value: 'maven-repo'
+  workspaces:
+    - name: shared-workspace
+      persistentVolumeClaim:
+        claimName: shared-workspace
+    - name: maven-settings
+      emptyDir: {}
+  podTemplate:
+    volumes:
+      - name: maven-repo
+        persistentVolumeClaim:
+          claimName: maven-repo

@@ -70,6 +70,9 @@ spec:
         The context directory within the repository for sources on
         which we want to execute maven goals.
       default: "."
+    - name: MVN_REPO_CACHE
+      description: The name of the persistent maven repo volume.
+      default: mvn-repo-empty
   steps:
     - name: mvn-settings
       image: registry.access.redhat.com/ubi8/ubi-minimal:latest
@@ -145,4 +148,11 @@ spec:
       args:
         - -s
         - $(workspaces.maven-settings.path)/settings.xml
+        - -Dmaven.repo.local=/mvn-cache
         - "$(params.GOALS)"
+      volumeMounts:
+        - name: $(params.MVN_REPO_CACHE)
+          mountPath: /mvn-cache
+  volumes:
+    - name: mvn-repo-empty
+      emptyDir: {}

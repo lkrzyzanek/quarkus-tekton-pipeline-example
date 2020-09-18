@@ -20,6 +20,9 @@ spec:
     - name: baseImage
       description: base image to run maven build and output image build
       default: registry.access.redhat.com/ubi8/openjdk-11
+    - name: mavenRepoVolume
+      description: Volume name for maven local repo volume
+      default: mvn-repo-empty
   workspaces:
     - name: shared-workspace
     - name: maven-settings
@@ -47,6 +50,8 @@ spec:
           value: $(params.baseImage)
         - name: CONTEXT_DIR
           value: $(params.contextDir)
+        - name: MVN_REPO_CACHE
+          value: $(params.mavenRepoVolume)
         - name: GOALS
           value:
             - -DskipTests=true
