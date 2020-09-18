@@ -8,9 +8,7 @@ The goal is to use purely official tekton tasks and just configure the pipeline.
 The pipeline consists of these steps:
 
 1. Clone git repo (git-clone)
-2. Compile project (maven task)
-3. Run tests (maven)
-4. Build and push image to repository (maven task + quarkus container plugin)
+2. Compile, build and push image to repository (maven task + quarkus container plugin)
 
 ## Prerequisites
 
