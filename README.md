@@ -3,12 +3,17 @@ Example of Tekton pipeline for Quarkus simple project
 
 The goal is to use purely official tekton tasks and just configure the pipeline.
 
+EDIT: The official maven task doesn't  provide a way for local maven repo
+
+
 ## Pipeline design
 
 The pipeline consists of these steps:
 
 1. Clone git repo (git-clone)
-2. Compile, build and push image to repository (maven task + quarkus container plugin)
+2. Compile project
+3. Test projects
+2. Build and push image to repository (maven task + quarkus container plugin)
 
 ## Prerequisites
 
@@ -37,6 +42,7 @@ kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline
 ```
 
 Optionally install Tekton CLI: https://github.com/tektoncd/cli
+or Tekton Dashboard: https://github.com/tektoncd/dashboard/blob/master/docs/install.md#installing-tekton-dashboard-on-kubernetes
 
 ### Tekton official tasks
 
@@ -44,45 +50,24 @@ Optionally install Tekton CLI: https://github.com/tektoncd/cli
 # git-clone task
 kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.2/git-clone.yaml
 # maven task
-kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/maven/0.2/maven.yaml
+# commented - used improved task in pipeline/task-maven-with-cache.yaml
+# kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/maven/0.2/maven.yaml
 ```
 
 ## Pipeline Deploy
 Apply all pipeline yamls.
 1. persistent-volume-claims.yaml - contains volumes for pipeline
 2. pipeline.yaml - build pipeline
+3. task-maven-with-cache.yaml - maven tekton task with enabled caching
 
 ```
 kubectl apply -f pipeline
 ```
 ## Pipeline Run
 
-via Tekton CLI:
+Pipeline with persistent volume claim cache which ensures sharing maven repository storage between pipeline runs 
 ```
-tkn pipeline start build-pipeline \
- --param gitUrl='https://github.com/lkrzyzanek/quarkus-tekton-pipeline-example.git' \
- --param gitRevision='master' \
- --param imageGroup='test' \
- --param imageName='getting-started' \
- --workspace name=shared-workspace,claimName=shared-workspace \
- --workspace name=maven-settings,emptyDir="" \
- --showlog
-```
-
-and wait for the output like
-```
-PipelineRun started: build-pipeline-run-h7p2n
-Waiting for logs to be available...
-```
-It ends classic maven output and these two lines specify where the image was pushed 
-```
-[build-push-image : mvn-goals] [INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Container entrypoint set to [java, -Djava.util.logging.manager=org.jboss.logmanager.LogManager, -cp, /app/resources:/app/classes:/app/libs/*, io.quarkus.runner.GeneratedMain]
-[build-push-image : mvn-goals] [INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Pushed container image example.com/test/getting-started:1.0-SNAPSHOT (sha256:03b9eef5d8c123e8a58942533f7612b661660fb7692d7751e802afbc29827946)
-```
-
-You can also check details via:
-```
-tkn pipelinerun describe build-pipeline-run-h7p2n
+kubectl apply -f pipeline/run/pipelinerun-pvc-cache.yaml
 ```
 
 ## Deploy app
@@ -99,3 +84,4 @@ http://127.0.0.1:53430/hello
 
 * https://redhat-developer-demos.github.io/tekton-tutorial-staging/tekton-tutorial/setup.html
 * https://quarkus.io/guides/container-image
+* https://github.com/tektoncd/catalog/tree/master/task/buildpacks/0.1/

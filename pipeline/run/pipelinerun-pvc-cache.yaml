@@ -13,7 +13,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: pipelinerun-withcache
+  name: pipelinerun-pvc-cache
 spec:
   pipelineRef:
     name: build-pipeline

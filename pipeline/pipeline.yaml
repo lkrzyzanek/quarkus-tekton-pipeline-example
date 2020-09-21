@@ -40,7 +40,7 @@ spec:
           value: $(params.gitRevision)
         - name: deleteExisting
           value: "true"
-    - name: build-push-image
+    - name: compile
       taskRef:
         name: maven
       runAfter:
@@ -50,7 +50,48 @@ spec:
           value: $(params.baseImage)
         - name: CONTEXT_DIR
           value: $(params.contextDir)
-        - name: MVN_REPO_CACHE
+        - name: CACHE
+          value: $(params.mavenRepoVolume)
+        - name: GOALS
+          value:
+            - clean
+            - compile
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: shared-workspace
+    - name: test
+      taskRef:
+        name: maven
+      runAfter:
+        - compile
+      params:
+        - name: MAVEN_IMAGE
+          value: $(params.baseImage)
+        - name: CONTEXT_DIR
+          value: $(params.contextDir)
+        - name: CACHE
+          value: $(params.mavenRepoVolume)
+        - name: GOALS
+          value:
+            - test
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: shared-workspace
+    - name: build-push-image
+      taskRef:
+        name: maven
+      runAfter:
+        - test
+      params:
+        - name: MAVEN_IMAGE
+          value: $(params.baseImage)
+        - name: CONTEXT_DIR
+          value: $(params.contextDir)
+        - name: CACHE
           value: $(params.mavenRepoVolume)
         - name: GOALS
           value:
